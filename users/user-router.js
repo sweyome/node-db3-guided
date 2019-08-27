@@ -17,10 +17,9 @@ router.get('/', (req, res) => {
 router.get('/:id', (req, res) => {
   const { id } = req.params;
 
-  db('users').where({ id })
+  users.findById(id)
   .then(users => {
     const user = users[0];
-
     if (user) {
       res.json(user);
     } else {
@@ -34,7 +33,7 @@ router.get('/:id', (req, res) => {
 
 router.post('/', (req, res) => {
   const userData = req.body;
-
+//! resolve to newly create users
   db('users').insert(userData)
   .then(ids => {
     res.status(201).json({ created: ids[0] });
@@ -43,14 +42,14 @@ router.post('/', (req, res) => {
     res.status(500).json({ message: 'Failed to create new user' });
   });
 });
-
+//! updates
 router.put('/:id', (req, res) => {
   const { id } = req.params;
   const changes = req.body;
 
-  db('users').where({ id }).update(changes)
-  .then(count => {
-    if (count) {
+  users.update(changes,id)
+  .then(user => {
+    if (user) {
       res.json({ update: count });
     } else {
       res.status(404).json({ message: 'Could not find user with given id' });
@@ -60,11 +59,11 @@ router.put('/:id', (req, res) => {
     res.status(500).json({ message: 'Failed to update user' });
   });
 });
-
+//! remove 
 router.delete('/:id', (req, res) => {
   const { id } = req.params;
 
-  db('users').where({ id }).del()
+ user.remove(id)
   .then(count => {
     if (count) {
       res.json({ removed: count });
@@ -76,5 +75,18 @@ router.delete('/:id', (req, res) => {
     res.status(500).json({ message: 'Failed to delete user' });
   });
 });
+router.get('/:id/posts', (req,res) =>{
+  const {id} = req.params;
+  db('posts as p')
+  .join('users as u','u.id', 'p.user_id')
+  .select('p.id','p.contents','u.username')
+  .where({user_id:id})
+  .then(posts =>{
+    res.json(posts)
+  })
+  .catch(err =>{
+    res.status(500).json({message:"failed to get posts"})
+  });
+})
 
 module.exports = router;
